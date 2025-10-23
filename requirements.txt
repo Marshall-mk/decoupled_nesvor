@@ -1,0 +1,74 @@
+# NeSVoR2: Neural Slice-to-Volume Reconstruction
+# Medical MRI Super-Resolution using Implicit Neural Representations
+
+# ============================================================================
+# Core Deep Learning Framework
+# ============================================================================
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ============================================================================
+# Medical Imaging Libraries
+# ============================================================================
+nibabel>=5.0.0              # NIfTI file I/O for medical images
+SimpleITK>=2.2.0            # N4 bias field correction (optional but recommended)
+
+# ============================================================================
+# Scientific Computing
+# ============================================================================
+numpy>=1.24.0
+scipy>=1.10.0
+
+# ============================================================================
+# Image Processing
+# ============================================================================
+scikit-image>=0.20.0        # Morphological operations, thresholding, filtering
+
+# ============================================================================
+# System Utilities
+# ============================================================================
+psutil>=5.9.0               # Memory and CPU monitoring for benchmarking
+
+# ============================================================================
+# Optional: Enhanced Deep Learning (for brain segmentation)
+# ============================================================================
+# monai>=1.2.0              # Medical Open Network for AI (optional)
+#                           # Uncomment if using MONAI-based segmentation models
+
+# ============================================================================
+# Development Tools (Optional)
+# ============================================================================
+# pytest>=7.0.0             # Unit testing
+# black>=23.0.0             # Code formatting
+# flake8>=6.0.0             # Linting
+# mypy>=1.0.0               # Type checking
+# jupyter>=1.0.0            # Jupyter notebooks for experimentation
+# matplotlib>=3.7.0         # Visualization
+# tensorboard>=2.12.0       # Training visualization
+
+# ============================================================================
+# Notes:
+# ============================================================================
+# - PyTorch: Install from https://pytorch.org with appropriate CUDA version
+#   Example: pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#
+# - SimpleITK is optional but required for N4 bias field correction
+#   If not installed, skip the bias correction phase with --no-bias-correction
+#
+# - MONAI is optional, only needed if using MONAI-based brain segmentation
+#   The codebase dynamically checks for its availability
+#
+# - For GPU support, ensure CUDA toolkit is installed and PyTorch is built with CUDA
+#
+# Installation:
+# ------------
+# CPU only:
+#   pip install -r requirements.txt
+#
+# GPU (CUDA 11.8):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#   pip install -r requirements.txt
+#
+# GPU (CUDA 12.1):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#   pip install -r requirements.txt
