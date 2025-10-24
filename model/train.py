@@ -317,6 +317,15 @@ def train(slices: List[Slice], args: Namespace) -> Tuple[INR, List[Slice], Volum
         for k in losses:
             average(k, losses[k].item())
 
+        # Update progress bar if available
+        if hasattr(args, 'progress_bar') and args.progress_bar is not None:
+            postfix_dict = {
+                'loss': f'{average[D_LOSS]:.4f}',
+                'lr': f'{optimizer.param_groups[0]["lr"]:.2e}'
+            }
+            args.progress_bar.set_postfix(postfix_dict)
+            args.progress_bar.update(1)
+
         # ========== Logging and LR Decay ==========
         if (decay_milestones and i >= decay_milestones[0]) or i == args.n_iter:
             # Log current progress

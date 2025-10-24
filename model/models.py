@@ -802,7 +802,9 @@ class NeSVoR(nn.Module):
             USE_TORCH = True
         else:
             # Set default GPU for tinycudann
-            torch.cuda.set_device(args.device)
+            # Extract device index from torch.device object
+            device_idx = args.device.index if args.device.index is not None else 0
+            torch.cuda.set_device(device_idx)
 
         self.spatial_scaling = spatial_scaling
         self.args = args
