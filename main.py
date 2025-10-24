@@ -865,10 +865,38 @@ def create_default_args() -> Namespace:
         help="Create volume mask from stack intersection",
     )
 
-    # Preprocessing options
+    # Preprocessing options - Segmentation
     parser.add_argument(
         "--segmentation", action="store_true", help="Run brain segmentation"
     )
+    parser.add_argument(
+        "--batch-size-seg",
+        type=int,
+        default=16,
+        help="Batch size for segmentation",
+    )
+    parser.add_argument(
+        "--no-augmentation-seg",
+        action="store_true",
+        help="Disable inference data augmentation in segmentation",
+    )
+    parser.add_argument(
+        "--dilation-radius-seg",
+        type=float,
+        default=1.0,
+        help="Dilation radius for segmentation mask in millimeter.",
+    )
+    parser.add_argument(
+        "--threshold-small-seg",
+        type=float,
+        default=0.1,
+        help=(
+            "Threshold for removing small segmentation mask (between 0 and 1). "
+            "A mask will be removed if its area < threshold * max area in the stack."
+        ),
+    )
+
+    # Preprocessing options - N4 Bias Field Correction
     parser.add_argument(
         "--bias-field-correction",
         action="store_true",
@@ -879,6 +907,63 @@ def create_default_args() -> Namespace:
         default=0,
         type=int,
         help="Number of levels used for bias field estimation.",
+    )
+    parser.add_argument(
+        "--n-proc-n4",
+        type=int,
+        default=8,
+        help="Number of workers for the N4 algorithm.",
+    )
+    parser.add_argument(
+        "--shrink-factor-n4",
+        type=int,
+        default=2,
+        help="The shrink factor used to reduce the size and complexity of the image.",
+    )
+    parser.add_argument(
+        "--tol-n4",
+        type=float,
+        default=0.001,
+        help="The convergence threshold in N4.",
+    )
+    parser.add_argument(
+        "--spline-order-n4",
+        type=int,
+        default=3,
+        help="The order of B-spline.",
+    )
+    parser.add_argument(
+        "--noise-n4",
+        type=float,
+        default=0.01,
+        help="The noise estimate defining the Wiener filter.",
+    )
+    parser.add_argument(
+        "--n-iter-n4",
+        type=int,
+        default=50,
+        help="The maximum number of iterations specified at each fitting level.",
+    )
+    parser.add_argument(
+        "--n-levels-n4",
+        type=int,
+        default=4,
+        help="The number of fitting levels.",
+    )
+    parser.add_argument(
+        "--n-control-points-n4",
+        type=int,
+        default=4,
+        help=(
+            "The control point grid size in each dimension. "
+            "The B-spline mesh size is equal to the number of control points in that dimension minus the spline order."
+        ),
+    )
+    parser.add_argument(
+        "--n-bins-n4",
+        type=int,
+        default=200,
+        help="The number of bins in the log input intensity histogram.",
     )
     parser.add_argument(
         "--skip-assessment", action="store_true", help="Skip quality assessment"
@@ -982,14 +1067,14 @@ def create_default_args() -> Namespace:
         help="Skip reconstruction (training)",
     )
     parser.add_argument(
-        "--n-iter", type=int, default=5000, help="Number of training iterations"
+        "--n-iter", type=int, default=6000, help="Number of training iterations"
     )
     parser.add_argument("--n-epochs", type=int, help="Number of training epochs")
     parser.add_argument(
         "--batch-size", type=int, default=4096, help="Training batch size"
     )
     parser.add_argument(
-        "--learning-rate", type=float, default=0.01, help="Learning rate"
+        "--learning-rate", type=float, default=5e-3, help="Learning rate"
     )
     parser.add_argument(
         "--single-precision", action="store_true", help="Use FP32 instead of FP16"
@@ -1018,7 +1103,7 @@ def create_default_args() -> Namespace:
     parser.add_argument(
         "--coarsest-resolution",
         type=float,
-        default=2.0,
+        default=16.0,
         help="Coarsest hash grid resolution (mm)",
     )
     parser.add_argument(
@@ -1028,7 +1113,7 @@ def create_default_args() -> Namespace:
         help="Finest hash grid resolution (mm)",
     )
     parser.add_argument(
-        "--level-scale", type=float, default=1.39, help="Hash grid level scale factor"
+        "--level-scale", type=float, default=1.3819, help="Hash grid level scale factor"
     )
     parser.add_argument(
         "--n-features-per-level",
@@ -1041,7 +1126,7 @@ def create_default_args() -> Namespace:
     )
     parser.add_argument("--width", type=int, default=64, help="MLP hidden layer width")
     parser.add_argument(
-        "--depth", type=int, default=2, help="MLP depth (hidden layers)"
+        "--depth", type=int, default=1, help="MLP depth (hidden layers)"
     )
     parser.add_argument(
         "--n-features-z",
@@ -1086,17 +1171,23 @@ def create_default_args() -> Namespace:
     parser.add_argument(
         "--weight-bias",
         type=float,
-        default=0.1,
+        default=100.0,
         help="Bias field regularization weight",
     )
     parser.add_argument(
-        "--weight-image", type=float, default=0.01, help="Image regularization weight"
+        "--weight-image", type=float, default=1.0, help="Image regularization weight"
     )
     parser.add_argument(
         "--image-regularization",
-        default="TV",
+        default="edge",
         choices=["none", "TV", "edge", "L2"],
-        help="Image regularization type",
+        help=rst(
+            "Type of image regularization. \n\n"
+            "1. ``TV``: total variation (L1 regularization of image gradient); \n"
+            "2. ``edge``: edge-preserving regularization, see `--delta <#delta>`__\ . \n"
+            "3. ``L2``: L2 regularization of image gradient; \n"
+            "4. ``none``: no image regularization. \n\n"
+        ),
     )
     parser.add_argument(
         "--weight-deform",
@@ -1174,12 +1265,29 @@ def create_default_args() -> Namespace:
         "--inference-batch-size", type=int, default=1024, help="Inference batch size"
     )
     parser.add_argument(
+        "--output-psf-factor",
+        type=float,
+        default=1.0,
+        help="Determine the PSF for generating output volume: FWHM = output-resolution * output-psf-factor",
+    )
+    parser.add_argument(
         "--output-intensity-mean",
         type=float,
-        help="Rescale output to this mean intensity",
+        default=700.0,
+        help="Mean intensity of the output volume",
     )
     parser.add_argument(
         "--with-background", action="store_true", help="Include background in output"
+    )
+    parser.add_argument(
+        "--sample-mask",
+        type=str,
+        help="3D Mask for sampling INR. If not provided, will use a mask estimated from the input data.",
+    )
+    parser.add_argument(
+        "--sample-orientation",
+        type=str,
+        help="Path to a NIfTI file. The sampled volume will be reoriented according to the transformation in this file.",
     )
 
     # Output options
