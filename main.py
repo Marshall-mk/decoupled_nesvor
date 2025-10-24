@@ -334,8 +334,21 @@ def run_segmentation(
         input_stacks = input_dict["input_stacks"]
         logging.info(f"Running brain segmentation on {len(input_stacks)} stacks")
 
+        # Get segmentation parameters
+        batch_size = getattr(args, "batch_size_seg", 16)
+        augmentation = not getattr(args, "no_augmentation_seg", False)
+        radius = getattr(args, "dilation_radius_seg", 1.0)
+        threshold_small = getattr(args, "threshold_small_seg", 0.1)
+
         # Run segmentation on each stack
-        segmented_stacks = brain_segmentation(input_stacks, args)
+        segmented_stacks = brain_segmentation(
+            input_stacks,
+            args.device,
+            batch_size,
+            augmentation,
+            radius,
+            threshold_small,
+        )
 
         input_dict["input_stacks"] = segmented_stacks
         logging.info("Segmentation completed")
@@ -369,12 +382,21 @@ def run_bias_correction(
         input_stacks = input_dict["input_stacks"]
         logging.info(f"Running N4 bias field correction on {len(input_stacks)} stacks")
 
-        # Run N4 on each stack
-        corrected_stacks = []
-        for i, stack in enumerate(input_stacks):
-            logging.info(f"  Correcting stack {i + 1}/{len(input_stacks)}")
-            corrected_stack = n4_bias_field_correction(stack)
-            corrected_stacks.append(corrected_stack)
+        # Prepare N4 parameters dictionary
+        n4_params = {
+            "n_proc_n4": getattr(args, "n_proc_n4", 8),
+            "shrink_factor_n4": getattr(args, "shrink_factor_n4", 2),
+            "tol_n4": getattr(args, "tol_n4", 0.001),
+            "spline_order_n4": getattr(args, "spline_order_n4", 3),
+            "noise_n4": getattr(args, "noise_n4", 0.01),
+            "n_iter_n4": getattr(args, "n_iter_n4", 50),
+            "n_levels_n4": getattr(args, "n_levels_n4", 4),
+            "n_control_points_n4": getattr(args, "n_control_points_n4", 4),
+            "n_bins_n4": getattr(args, "n_bins_n4", 200),
+        }
+
+        # Run N4 on all stacks
+        corrected_stacks = n4_bias_field_correction(input_stacks, n4_params)
 
         input_dict["input_stacks"] = corrected_stacks
         input_dict["output_corrected_stacks"] = corrected_stacks
