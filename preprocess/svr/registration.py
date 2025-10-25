@@ -414,8 +414,7 @@ class SliceToVolumeRegistration(Registration):
             self.psf,
             slices.shape[-2:],
             self.res_s * (2**self.current_level) / self.res_v,
-            False,
-            False,
+            need_weight=False,
         )
         return warpped, slices
 

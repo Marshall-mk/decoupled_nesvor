@@ -1206,7 +1206,7 @@ def create_default_args() -> Namespace:
         help=rst(
             "Type of image regularization. \n\n"
             "1. ``TV``: total variation (L1 regularization of image gradient); \n"
-            "2. ``edge``: edge-preserving regularization, see `--delta <#delta>`__\ . \n"
+            "2. ``edge``: edge-preserving regularization, see `--delta <#delta>`__. \n"
             "3. ``L2``: L2 regularization of image gradient; \n"
             "4. ``none``: no image regularization. \n\n"
         ),

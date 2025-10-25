@@ -63,7 +63,6 @@ def psf_reconstruction(
                 None,
                 volume.shape[-3:],
                 res_s / res_r,
-                False,
                 equalize=True,
             )
             > 0.3
@@ -79,7 +78,6 @@ def psf_reconstruction(
         volume.mask[None, None] if use_mask else None,
         volume.shape[-3:],
         res_s / res_r,
-        False,
         equalize=True,
     )[0, 0]
 
@@ -145,7 +143,6 @@ class SRR_CG(nn.Module):
                 vol_mask,
                 volume.shape[-3:],
                 res_s / res_r,
-                False,
                 equalize=True,
             )
         else:
@@ -177,8 +174,7 @@ class SRR_CG(nn.Module):
             params["psf"],
             params["slice_shape"],
             params["res_s"] / params["res_r"],
-            False,
-            False,
+            need_weight=False,
         )
 
     def At(
@@ -197,8 +193,7 @@ class SRR_CG(nn.Module):
             vol_mask,
             params["volume_shape"],
             params["res_s"] / params["res_r"],
-            False,
-            False,
+            equalize=False,
         )
 
     def AtA(
@@ -249,8 +244,7 @@ def srr_update(
         v.mask[None, None] if use_mask else None,
         v.shape,
         res_s / res_r,
-        False,
-        False,
+        equalize=False,
     )
 
     if p is not None:
@@ -262,8 +256,7 @@ def srr_update(
             v.mask[None, None] if use_mask else None,
             v.shape,
             res_s / res_r,
-            False,
-            False,
+            equalize=False,
         )
         cmap_mask = cmap > 0
         g[cmap_mask] /= cmap[cmap_mask]
@@ -315,7 +308,6 @@ def simulate_slices(
         slices.shape[-2:],
         res_s / res_r,
         return_weight,
-        False,
     )
 
     if return_weight:

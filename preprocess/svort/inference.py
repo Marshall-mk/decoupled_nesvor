@@ -94,15 +94,8 @@ from data.slice_acq import (
 # Import SVR utility functions from the actual SVR module
 from preprocess.svr import stack_registration, SRR_CG, simulate_slices
 
-# Checkpoint directory and model URLs (should be defined in a config or __init__.py)
-# For now, we'll define them here
-import os
-
-CHECKPOINT_DIR = os.path.expanduser("~/.cache/nesvor/checkpoints")
-SVORT_URL_DICT = {
-    "v1": "https://github.com/daviddmc/NeSVoR/releases/download/v0.4.1/SVoRT_v1.pt",
-    "v2": "https://github.com/daviddmc/NeSVoR/releases/download/v0.4.1/SVoRT_v2.pt",
-}
+# Import checkpoint directory and model URLs from config
+from config import CHECKPOINT_DIR, SVORT_URL_DICT
 
 
 def compute_score(ncc: torch.Tensor, ncc_weight: torch.Tensor) -> float:
@@ -677,6 +670,11 @@ def svort_predict(
     if svort:
         if svort_version not in SVORT_URL_DICT:
             raise ValueError("unknown SVoRT version!")
+
+        # Ensure checkpoint directory exists
+        import os
+        os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+
         svort_url = SVORT_URL_DICT[svort_version]
         cp = torch.hub.load_state_dict_from_url(
             url=svort_url,

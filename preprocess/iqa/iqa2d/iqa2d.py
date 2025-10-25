@@ -11,17 +11,30 @@ from config import CHECKPOINT_DIR, IQA2D_URL
 def get_iqa2d_checkpoint() -> str:
     model_dir = CHECKPOINT_DIR
     model_name = "iqa2d.pt"
+
+    # Create checkpoint directory if it doesn't exist
+    os.makedirs(model_dir, exist_ok=True)
+
     if not os.path.exists(os.path.join(model_dir, model_name)):
         logging.info(
             "2D IQA CNN checkpoint not found. trying to download the checkpoint."
         )
         url = IQA2D_URL
         torch.hub.download_url_to_file(url, os.path.join(model_dir, model_name))
-        checkpoint = torch.load(os.path.join(model_dir, model_name))
+        # Load with dynamic map_location based on CUDA availability
+        map_location = 'cuda' if torch.cuda.is_available() else 'cpu'
+        checkpoint = torch.load(os.path.join(model_dir, model_name), map_location=map_location)
+
+        # Extract the EMA state dict and process it
         state_dict = checkpoint["ema_state_dict"]
         new_state_dict = {}
         for k in state_dict.keys():
-            new_state_dict[k.replace("module.", "", 1)] = state_dict[k]
+            # Remove "module." prefix if present, then add "model." prefix
+            new_key = k.replace("module.", "", 1)
+            if not new_key.startswith("model."):
+                new_key = "model." + new_key
+            new_state_dict[new_key] = state_dict[k]
+
         torch.save(new_state_dict, os.path.join(model_dir, model_name))
     return os.path.join(model_dir, model_name)
 

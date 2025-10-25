@@ -157,7 +157,6 @@ class SVoRT(nn.Module):
                     None,
                     params["volume_shape"],
                     params["res_s"] / params["res_r"],
-                    False,
                     equalize=True,
                 )
                 ax = mat2axisangle(_trans.matrix())
@@ -260,7 +259,6 @@ class SVoRTv2(nn.Module):
                     None,
                     params["volume_shape"],
                     params["res_s"] / params["res_r"],
-                    False,
                     equalize=True,
                 )
             if self.iqa:
@@ -321,8 +319,7 @@ class SRRtransformer(nn.Module):
             params["psf"],
             params["slice_shape"],
             params["res_s"] / params["res_r"],
-            False,
-            False,
+            need_weight=False,
         )
         idx = torch.cat((theta, idx), -1)
         x = torch.cat((slices, slices_est), 1)
@@ -423,8 +420,7 @@ class SVRtransformer(nn.Module):
                     params["psf"],
                     params["slice_shape"],
                     params["res_s"] / params["res_r"],
-                    False,
-                    False,
+                    need_weight=False,
                 )
         pos = torch.cat((theta, pos), -1)
         pe = self.pos_emb(pos)
@@ -508,8 +504,7 @@ class SVRtransformerV2(nn.Module):
                     params["psf"],
                     params["slice_shape"],
                     params["res_s"] / params["res_r"],
-                    False,
-                    False,
+                    need_weight=False,
                 )
         pos = torch.cat((theta, pos), -1)
         pe = self.pos_emb(pos)
@@ -578,8 +573,7 @@ class SRR(nn.Module):
             params["psf"],
             params["slice_shape"],
             params["res_s"] / params["res_r"],
-            False,
-            False,
+            need_weight=False,
         )
 
     def At(
@@ -598,8 +592,7 @@ class SRR(nn.Module):
             vol_mask,
             params["volume_shape"],
             params["res_s"] / params["res_r"],
-            False,
-            False,
+            equalize=False,
         )
 
     def AtA(
